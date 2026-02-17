@@ -1,0 +1,20 @@
+[project]
+name = "seer-medical"
+version = "0.1.0"
+description = "EEG data pipeline for clinical epilepsy monitoring"
+requires-python = ">=3.11"
+dependencies = [
+    "mne",
+    "numpy",
+    "scipy",
+    "dash",
+    "dash-bootstrap-components",
+    "plotly",
+    "fastapi",
+    "uvicorn",
+    "psycopg2-binary",
+    "sqlalchemy",
+    "httpx",
+    "pydantic",
+    "tabulate",
+]
