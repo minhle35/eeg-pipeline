@@ -1,1 +1,90 @@
-# EEG device simulator — Step 3
+# EEG device simulator
+"""
+This module simulates an EEG device by using real data from CHB-MIT Scalp EEG Database
+- iteratively read EDF file
+- slice it into 1-second segments/windows
+- yield each segment to an API for real-time processing
+
+The simulator can be used for testing and development of real-time EEG processing algorithms without needing a physical EEG device.
+
+An EDF file for `chb01_01.edf` has:
+- 23 channels (EEG electrodes)
+- Sampling rate: 256 Hz
+- Duration: 1 hour (3600 seconds)
+- a 1-hour recording at 256 Hz means 256 * 23 channels = 5888 values per second, and 3600 seconds means 3600 * 5888 = 21,196,800 total data points in the file.
+"""
+
+import mne
+import numpy as np
+import httpx
+import time
+from pathlib import Path
+
+
+def load_edf_file(edf_file):
+    """Load EDF file and return raw data object"""
+    raw = mne.io.read_raw_edf(str(edf_file), preload=True, verbose=False)
+    return raw.ch_names, raw.get_data(), int(raw.info["sfreq"])
+
+
+def make_chunk(channels, data, sfreq) -> list:
+    """split full recording into 1-second chunks
+    This process is similar to how network packets are split into smaller pieces for transmission. Each chunk will contain data for all channels but only for a 1-second window.
+    """
+    chunks = []
+    chunk_size = int(sfreq)
+    num_samples = data.shape[1]
+    for start in range(0, num_samples, chunk_size):
+        end = start + chunk_size
+        if end > num_samples:
+            break  # skip last chunk if it's less than 1 second
+        # each chunk is a 2D array of shape (channels x samples_in_chunk), where samples_in_chunk = sfreq (number of samples in 1 second)
+        chunk = data[:, start:end]
+        chunks.append(chunk)
+    return chunks
+
+
+def stream_chunks_to_api(
+    channels,
+    chunks,
+    recording_id: str,
+    api_url: str = "http://localhost:8000/api/eeg_chunk",
+):
+    """Send chunks to API endpoint simulating real-time streaming"""
+
+    with httpx.Client(timeout=30.0) as client:
+        for i, chunk in enumerate(chunks):
+            payload = {
+                "channels": channels,
+                "timestamp": time.time(),
+                "chunk_index": i,
+                "recording_id": recording_id,
+                "data": chunk.tolist(),  # convert numpy array to list for JSON serialization
+            }
+            try:
+                response = client.post(api_url, json=payload)
+                response.raise_for_status()
+                if i % 60 == 0:
+                    print(
+                        f"Sent chunk {i}/{len(chunks)} to API for recording {recording_id} every 60 seconds (simulating real-time streaming)"
+                    )
+            except httpx.HTTPError as e:
+                print(f"Error sending chunk {i}: {e}")
+            time.sleep(1)  # simulate real-time by waiting 1 second between chunks
+
+
+if __name__ == "__main__":
+    edf_file = "chb-mit/physionet.org/files/chbmit/1.0.0/chb01/chb01_01.edf"
+    raw_ch_names, raw_data, raw_sfreq = load_edf_file(edf_file)
+    # print(raw.info)
+    # print(f"Data shape: {raw.get_data().shape}")
+    # print(f"Channel names: {raw.ch_names[:5]}... (showing first 5)")
+    # print(f"Sampling rate: {raw.info['sfreq']} Hz")
+    # print(f"Duration: {raw.times[-1]:.2f} seconds")
+    # print(f"First 5 seconds of data (shape: {raw.get_data()[:, : 5 * 256].shape}):")
+    # print(raw.get_data()[:, : 5 * 256])
+    chunks = make_chunk(raw_ch_names, raw_data, raw_sfreq)
+    print(f"Total chunks: {len(chunks)}")
+    print(f"Chunk shape: {chunks[0].shape} (channels x samples)")
+    recording_id = Path(edf_file).name
+    stream_chunks_to_api(raw_ch_names, chunks, recording_id)

@@ -29,3 +29,4 @@ def init_db():
     from pipeline.models import EegSample, IngestionLog  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
+    print("Database initialized with tables: ", Base.metadata.tables.keys())
