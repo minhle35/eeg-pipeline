@@ -57,3 +57,6 @@ Content-Type: application/json
   "recording_id": "chb01_03.edf",
   "chunk_index": 0
 }
+
+### Query Router /api/eeg/{patient_id}/recordings}
+GET http://localhost:8000/api/eeg/chb01/recordings

@@ -66,6 +66,22 @@ def ingest_eeg_data(request: IngestRequest, db: Session = Depends(get_db)):
     return IngestResponse(status="success", message="Chunk ingested successfully")
 
 
+@query_router.get("/{patient_id}/recordings")
+def get_patient_recordings(patient_id: str, db: Session = Depends(get_db)):
+    """Endpoint to get summary of EEG data for a patient"""
+    total_samples = db.query(EegSample).filter_by(patient_id=patient_id).count()
+    if total_samples == 0:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    channels = (
+        db.query(EegSample.channel).filter_by(patient_id=patient_id).distinct().all()
+    )
+    return {
+        "patient_id": patient_id,
+        "total_samples": total_samples,
+        "channels": [ch[0] for ch in channels],
+    }
+
+
 @app.get("/health", response_model=IngestResponse)
 def health_check():
     """Health check endpoint to verify API is running"""
