@@ -29,7 +29,9 @@ def ingest_eeg_data(request: IngestRequest, db: Session = Depends(get_db)):
     """Endpoint to ingest EEG data chunks"""
     existing = (
         db.query(IngestionLog)
-        .filter_by(recording_id=request.recording_id, chunk_index=request.chunk_index)
+        .filter_by(
+            recording_id=request.recording_id, chunk_start_sec=request.chunk_index
+        )
         .first()
     )
     if existing:
@@ -59,7 +61,6 @@ def ingest_eeg_data(request: IngestRequest, db: Session = Depends(get_db)):
         checksum=check_sum,
     )
     db.add_all(samples + [log_entry])
-    db.add(log_entry)
     db.commit()
 
     return IngestResponse(status="success", message="Chunk ingested successfully")
@@ -69,3 +70,7 @@ def ingest_eeg_data(request: IngestRequest, db: Session = Depends(get_db)):
 def health_check():
     """Health check endpoint to verify API is running"""
     return IngestResponse(status="healthy", message="API is up and running")
+
+
+app.include_router(ingest_router)
+app.include_router(query_router)

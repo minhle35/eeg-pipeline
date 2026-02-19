@@ -48,43 +48,45 @@ def stream_chunks_to_api(
     channels,
     chunks,
     recording_id: str,
-    api_url: str = "http://localhost:8000/api/eeg_chunk",
+    api_url: str = "http://localhost:8000/api/ingest/",
+    limit: int | None = None,
+    delay: float = 0.01,
 ):
     """Send chunks to API endpoint simulating real-time streaming"""
+    chunks_to_send = chunks[:limit] if limit else chunks
+    total = len(chunks_to_send)
 
     with httpx.Client(timeout=30.0) as client:
-        for i, chunk in enumerate(chunks):
+        for i, chunk in enumerate(chunks_to_send):
             payload = {
                 "channels": channels,
                 "timestamp": time.time(),
                 "chunk_index": i,
                 "recording_id": recording_id,
-                "data": chunk.tolist(),  # convert numpy array to list for JSON serialization
+                "data": chunk.tolist(),
             }
             try:
                 response = client.post(api_url, json=payload)
                 response.raise_for_status()
-                if i % 60 == 0:
-                    print(
-                        f"Sent chunk {i}/{len(chunks)} to API for recording {recording_id} every 60 seconds (simulating real-time streaming)"
-                    )
+                if (i + 1) % 10 == 0 or i == 0:
+                    print(f"  Sent {i + 1}/{total} chunks for {recording_id}")
             except httpx.HTTPError as e:
                 print(f"Error sending chunk {i}: {e}")
-            time.sleep(1)  # simulate real-time by waiting 1 second between chunks
+                break
+            time.sleep(delay)
 
 
 if __name__ == "__main__":
     edf_file = "chb-mit/physionet.org/files/chbmit/1.0.0/chb01/chb01_01.edf"
     raw_ch_names, raw_data, raw_sfreq = load_edf_file(edf_file)
-    # print(raw.info)
-    # print(f"Data shape: {raw.get_data().shape}")
-    # print(f"Channel names: {raw.ch_names[:5]}... (showing first 5)")
-    # print(f"Sampling rate: {raw.info['sfreq']} Hz")
-    # print(f"Duration: {raw.times[-1]:.2f} seconds")
-    # print(f"First 5 seconds of data (shape: {raw.get_data()[:, : 5 * 256].shape}):")
-    # print(raw.get_data()[:, : 5 * 256])
     chunks = make_chunk(raw_ch_names, raw_data, raw_sfreq)
-    print(f"Total chunks: {len(chunks)}")
-    print(f"Chunk shape: {chunks[0].shape} (channels x samples)")
     recording_id = Path(edf_file).name
-    stream_chunks_to_api(raw_ch_names, chunks, recording_id)
+
+    # Limit to 10 chunks for quick testing (remove limit for full ingestion)
+    limit = 10
+    print(f"Total chunks available: {len(chunks)}")
+    print(f"Sending {limit} chunks for testing...")
+    print(f"Chunk shape: {chunks[0].shape} (channels x samples)")
+
+    stream_chunks_to_api(raw_ch_names, chunks, recording_id, limit=limit)
+    print("Done!")

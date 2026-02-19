@@ -1,0 +1,59 @@
+### Health Check
+GET http://localhost:8000/health
+
+### Ingest a single chunk (2 channels, 3 samples each)
+POST http://localhost:8000/api/ingest/
+Content-Type: application/json
+
+{
+  "recording_id": "chb01_03.edf",
+  "chunk_index": 0,
+  "channels": ["FP1-F7", "F7-T7"],
+  "data": [[1.23, -4.56, 7.89], [0.12, -3.45, 6.78]],
+  "timestamp": 1708300000.0
+}
+
+### Ingest same chunk again (should return "duplicate")
+POST http://localhost:8000/api/ingest/
+Content-Type: application/json
+
+{
+  "recording_id": "chb01_03.edf",
+  "chunk_index": 0,
+  "channels": ["FP1-F7", "F7-T7"],
+  "data": [[1.23, -4.56, 7.89], [0.12, -3.45, 6.78]],
+  "timestamp": 1708300000.0
+}
+
+### Ingest a second chunk (chunk_index = 1)
+POST http://localhost:8000/api/ingest/
+Content-Type: application/json
+
+{
+  "recording_id": "chb01_03.edf",
+  "chunk_index": 1,
+  "channels": ["FP1-F7", "F7-T7"],
+  "data": [[2.34, -5.67, 8.90], [1.23, -4.56, 7.89]],
+  "timestamp": 1708300001.0
+}
+
+### Ingest chunk for a different recording
+POST http://localhost:8000/api/ingest/
+Content-Type: application/json
+
+{
+  "recording_id": "chb01_04.edf",
+  "chunk_index": 0,
+  "channels": ["FP1-F7", "F7-T7"],
+  "data": [[9.99, -8.88, 7.77], [6.66, -5.55, 4.44]],
+  "timestamp": 1708300002.0
+}
+
+### Invalid request — missing required field (should return 422)
+POST http://localhost:8000/api/ingest/
+Content-Type: application/json
+
+{
+  "recording_id": "chb01_03.edf",
+  "chunk_index": 0
+}
