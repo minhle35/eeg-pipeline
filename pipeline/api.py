@@ -82,6 +82,32 @@ def get_patient_recordings(patient_id: str, db: Session = Depends(get_db)):
     }
 
 
+@query_router.get("/{patient_id}/recordings/{recording_id}/summary")
+def get_recording_summary(
+    patient_id: str, recording_id: str, db: Session = Depends(get_db)
+):
+    """Endpoint to get summary of a specific recording"""
+    total_samples = (
+        db.query(EegSample)
+        .filter_by(patient_id=patient_id, recording_id=recording_id)
+        .count()
+    )
+    if total_samples == 0:
+        raise HTTPException(status_code=404, detail="Recording not found")
+    channels = (
+        db.query(EegSample.channel)
+        .filter_by(patient_id=patient_id, recording_id=recording_id)
+        .distinct()
+        .all()
+    )
+    return {
+        "patient_id": patient_id,
+        "recording_id": recording_id,
+        "total_samples": total_samples,
+        "channels": [ch[0] for ch in channels],
+    }
+
+
 @app.get("/health", response_model=IngestResponse)
 def health_check():
     """Health check endpoint to verify API is running"""

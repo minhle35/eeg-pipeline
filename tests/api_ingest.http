@@ -60,3 +60,6 @@ Content-Type: application/json
 
 ### Query Router /api/eeg/{patient_id}/recordings}
 GET http://localhost:8000/api/eeg/chb01/recordings
+
+### Query Router /api/eeg/{patient_id}/recordings/{recording_id}/summary
+GET http://localhost:8000/api/eeg/chb01/recordings/chb01_03.edf/summary
