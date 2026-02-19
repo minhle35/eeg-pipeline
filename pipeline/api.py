@@ -108,6 +108,39 @@ def get_recording_summary(
     }
 
 
+@query_router.get("/{patient_id}/recordings/{recording_id}/data")
+def get_recording_data(
+    patient_id: str,
+    recording_id: str,
+    start_sec: float,
+    end_sec: float,
+    db: Session = Depends(get_db),
+):
+    """Endpoint to get EEG data for a specific recording within a time range"""
+    samples = (
+        db.query(EegSample)
+        .filter_by(patient_id=patient_id, recording_id=recording_id)
+        .filter(EegSample.timestamp_sec >= start_sec)
+        .filter(EegSample.timestamp_sec < end_sec)
+        .order_by(EegSample.timestamp_sec)
+        .all()
+    )
+    return {
+        "patient_id": patient_id,
+        "recording_id": recording_id,
+        "start_sec": start_sec,
+        "end_sec": end_sec,
+        "samples": [
+            {
+                "channel": s.channel,
+                "timestamp_sec": s.timestamp_sec,
+                "value_uv": s.value_uv,
+            }
+            for s in samples
+        ],
+    }
+
+
 @app.get("/health", response_model=IngestResponse)
 def health_check():
     """Health check endpoint to verify API is running"""

@@ -63,3 +63,24 @@ GET http://localhost:8000/api/eeg/chb01/recordings
 
 ### Query Router /api/eeg/{patient_id}/recordings/{recording_id}/summary
 GET http://localhost:8000/api/eeg/chb01/recordings/chb01_03.edf/summary
+
+### Query data — first second (chunk 0, should return 6 samples: 2 channels x 3 samples)
+GET http://localhost:8000/api/eeg/chb01/recordings/chb01_03.edf/data?start_sec=0&end_sec=1
+
+### Query data — second chunk (should return 6 samples)
+GET http://localhost:8000/api/eeg/chb01/recordings/chb01_03.edf/data?start_sec=1&end_sec=2
+
+### Query data — both chunks (should return 12 samples)
+GET http://localhost:8000/api/eeg/chb01/recordings/chb01_03.edf/data?start_sec=0&end_sec=2
+
+### Query data — empty range (no data past chunk 1, should return 0 samples)
+GET http://localhost:8000/api/eeg/chb01/recordings/chb01_03.edf/data?start_sec=100&end_sec=110
+
+### Query data — different recording
+GET http://localhost:8000/api/eeg/chb01/recordings/chb01_04.edf/data?start_sec=0&end_sec=1
+
+### Query data — non-existent recording (should return 0 samples)
+GET http://localhost:8000/api/eeg/chb01/recordings/doesnotexist.edf/data?start_sec=0&end_sec=10
+
+### Query data — missing required params (should return 422)
+GET http://localhost:8000/api/eeg/chb01/recordings/chb01_03.edf/data
