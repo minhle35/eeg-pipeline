@@ -1,6 +1,7 @@
 # FastAPI ingestion + query endpoints — Step 4
 
 from fastapi import FastAPI, Depends, APIRouter, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from sqlalchemy.orm import Session
 import hashlib
@@ -19,6 +20,13 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="EEG Pipeline API", version="1.0", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 ingest_router = APIRouter(prefix="/api/ingest", tags=["Ingestion"])
 query_router = APIRouter(prefix="/api/eeg", tags=["Query"])
