@@ -19,3 +19,7 @@ chb-mit/
 
 # Misc
 result
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
