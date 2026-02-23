@@ -4,11 +4,14 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from pipeline.db import Base
 
+# BigInteger for PostgreSQL, Integer for SQLite (SQLite only auto-increments INTEGER)
+BigIntPK = BigInteger().with_variant(Integer, "sqlite")
+
 
 class EegSample(Base):
     __tablename__ = "eeg_samples"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(BigIntPK, primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(Text, nullable=False)
     recording_id: Mapped[str] = mapped_column(Text, nullable=False)
     channel: Mapped[str] = mapped_column(Text, nullable=False)
@@ -27,7 +30,7 @@ class EegSample(Base):
 class IngestionLog(Base):
     __tablename__ = "ingestion_log"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(BigIntPK, primary_key=True, autoincrement=True)
     patient_id: Mapped[str] = mapped_column(Text, nullable=False)
     recording_id: Mapped[str] = mapped_column(Text, nullable=False)
     chunk_start_sec: Mapped[float | None] = mapped_column(Double)
