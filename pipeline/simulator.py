@@ -77,16 +77,23 @@ def stream_chunks_to_api(
 
 
 if __name__ == "__main__":
-    edf_file = "chb-mit/physionet.org/files/chbmit/1.0.0/chb01/chb01_01.edf"
-    raw_ch_names, raw_data, raw_sfreq = load_edf_file(edf_file)
-    chunks = make_chunk(raw_ch_names, raw_data, raw_sfreq)
-    recording_id = Path(edf_file).name
+    data_dir = Path("chb-mit/physionet.org/files/chbmit/1.0.0/chb01")
+    edf_files = sorted(data_dir.glob("*.edf"))
 
-    # Limit to 10 chunks for quick testing (remove limit for full ingestion)
+    # 10 chunks per file for quick ingestion (~10 seconds of EEG each)
+    # Set to None for full ingestion (3600 chunks per file = 1 hour each)
     limit = 10
-    print(f"Total chunks available: {len(chunks)}")
-    print(f"Sending {limit} chunks for testing...")
-    print(f"Chunk shape: {chunks[0].shape} (channels x samples)")
 
-    stream_chunks_to_api(raw_ch_names, chunks, recording_id, limit=limit)
-    print("Done!")
+    print(f"Found {len(edf_files)} EDF files")
+    print(f"Ingesting {limit} chunks per file...\n")
+
+    for edf_file in edf_files:
+        recording_id = edf_file.name
+        print(f"[{recording_id}] Loading...")
+        raw_ch_names, raw_data, raw_sfreq = load_edf_file(edf_file)
+        chunks = make_chunk(raw_ch_names, raw_data, raw_sfreq)
+        print(f"[{recording_id}] {len(chunks)} chunks available, sending {limit or len(chunks)}")
+        stream_chunks_to_api(raw_ch_names, chunks, recording_id, limit=limit)
+        print(f"[{recording_id}] Done!\n")
+
+    print(f"All {len(edf_files)} files ingested.")

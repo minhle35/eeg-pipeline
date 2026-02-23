@@ -3,12 +3,19 @@ import { fetchRecordings, fetchSummary, fetchData } from "../api";
 import type { RecordingsResponse, SummaryResponse, DataResponse } from "../types";
 
 const PATIENT_ID = "chb01";
-const RECORDING_ID = "chb01_03.edf";
+const MIN_SAMPLES = 1;
 const MAX_SAMPLES = 43;
+
+// Generate recording IDs: chb01_01.edf, chb01_02.edf, ..., chb01_43.edf
+const RECORDING_IDS = Array.from(
+  { length: MAX_SAMPLES - MIN_SAMPLES + 1 },
+  (_, i) => `chb01_${String(i + MIN_SAMPLES).padStart(2, "0")}.edf`
+);
 
 export default function Dashboard() {
   const [healthy, setHealthy] = useState<boolean | null>(null);
   const [recordings, setRecordings] = useState<RecordingsResponse | null>(null);
+  const [selectedRecording, setSelectedRecording] = useState(RECORDING_IDS[0]);
   const [detail, setDetail] = useState<{ summary: SummaryResponse; data: DataResponse } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,8 +32,8 @@ export default function Dashboard() {
   async function handleView() {
     try {
       const [summary, data] = await Promise.all([
-        fetchSummary(PATIENT_ID, RECORDING_ID),
-        fetchData(PATIENT_ID, RECORDING_ID, 0, 1),
+        fetchSummary(PATIENT_ID, selectedRecording),
+        fetchData(PATIENT_ID, selectedRecording, 0, 1),
       ]);
       setDetail({ summary, data });
     } catch (e: unknown) {
@@ -68,9 +75,17 @@ export default function Dashboard() {
                 <code key={ch} className="channel-tag">{ch}</code>
               ))}
             </div>
-            <button onClick={handleView} style={{ marginTop: "1rem" }}>
-              View {RECORDING_ID}
-            </button>
+            <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <select
+                value={selectedRecording}
+                onChange={(e) => setSelectedRecording(e.target.value)}
+              >
+                {RECORDING_IDS.map((id) => (
+                  <option key={id} value={id}>{id}</option>
+                ))}
+              </select>
+              <button onClick={handleView}>View</button>
+            </div>
           </>
         ) : (
           <p>Loading recordings...</p>
