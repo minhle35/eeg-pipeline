@@ -18,3 +18,8 @@ dependencies = [
     "pydantic",
     "tabulate",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest",
+]
