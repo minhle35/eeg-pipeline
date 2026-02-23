@@ -4,6 +4,11 @@ An EEG data pipeline built to demonstrate how software systems can support epile
 
 Epilepsy affects over 50 million people worldwide, making it one of the most common neurological conditions. Clinicians rely on continuous EEG recordings to identify seizure patterns, but raw EEG data is dense — a single hour of 23-channel recording at 256 Hz produces over 21 million data points. Managing this volume efficiently requires careful data pipeline design.
 
+
+Uploading Screen Recording 2026-02-23 at 9.12.15 AM.mov…
+
+
+
 ## Architecture
 
 ```
